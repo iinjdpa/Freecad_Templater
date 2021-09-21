@@ -1,0 +1,97 @@
+templates:
+- elements:
+  - name: "DESCRIPCI\xD3N"
+    treelevel: 1
+    type: textdocument
+  - name: "F\xD3RMULAS"
+    treelevel: 1
+    type: sheet
+  - name: VARIABLES
+    treelevel: 1
+    type: folder
+  - name: VAR1
+    treelevel: 2
+    type: dynamicData
+  - name: VAR2
+    treelevel: 2
+    type: dynamicData
+  - name: ENSAMBLE
+    treelevel: 1
+    type: folder
+  - name: ASS4
+    treelevel: 2
+    type: assembly4
+  - name: FORMAS
+    treelevel: 1
+    type: folder
+  - name: aristas
+    treelevel: 2
+    type: folder
+  - name: finales
+    treelevel: 2
+    type: folder
+  name: MI_PLANTILLA
+- elements:
+  - name: "DESCRIPCI\xD3N"
+    treelevel: 1
+    type: textdocument
+  - name: DIMENSIONES
+    treelevel: 1
+    type: sheet
+  - name: VARIABLES
+    treelevel: 1
+    type: dynamicData
+  - name: "SIMULACI\xD3N"
+    treelevel: 1
+    type: assembly4
+  - name: FORMAS
+    treelevel: 1
+    type: folder
+  - name: sketches
+    treelevel: 2
+    type: folder
+  - name: aristas
+    treelevel: 2
+    type: folder
+  - name: superficies
+    treelevel: 2
+    type: folder
+  - name: referencias
+    treelevel: 2
+    type: folder
+  - name: operaciones
+    treelevel: 2
+    type: folder
+  name: Plantilla principal
+- elements:
+  - name: "DESCRIPCI\xD3N"
+    treelevel: 1
+    type: textdocument
+  - name: DIMENSIONES
+    treelevel: 1
+    type: sheet
+  - name: VARIABLES
+    treelevel: 1
+    type: dynamicData
+  - name: "SIMULACI\xD3N"
+    treelevel: 1
+    type: assembly4
+  - name: CARPETAS
+    treelevel: 1
+    type: folder
+  - name: sketches
+    treelevel: 2
+    type: folder
+  - name: aristas
+    treelevel: 2
+    type: folder
+  - name: superficies
+    treelevel: 2
+    type: folder
+  - name: referencias
+    treelevel: 2
+    type: folder
+  - name: operaciones
+    treelevel: 2
+    type: folder
+  name: Plantilla secundaria
