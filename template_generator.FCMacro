@@ -1,0 +1,324 @@
+# coding: utf-8
+
+__Name__ = 'Template generator'
+__Comment__ = 'Create FreeCAD template into opened file from yaml configuration'
+__Author__ = "Daniel Pose"
+__Version__ = '0.3'
+__Date__ = '2021-09-19'
+__License__ = 'MIT'
+__Web__ = ""
+__Wiki__ = ""
+__Icon__ = ''
+__Help__ = ''
+__Status__ = 'stable'
+__Requires__ = 'Freecad >= 0.19'
+__Communication__ = ''
+__Files__ = 'template_generator.yaml'
+
+import FreeCAD as App
+import FreeCADGui as Gui
+import PySide
+from Templater import ui_listview
+from Templater import ui_editor
+from PySide import QtCore, QtGui
+from PySide.QtCore import Qt
+from PySide.QtGui import QLineEdit, QRadioButton, QDialog, QApplication, QStyleFactory, QTreeWidgetItem
+from PySide.QtGui import QComboBox, QMessageBox
+import DynamicDataCmd
+import yaml
+from yaml import Loader
+import os
+import sys
+from collections import OrderedDict
+
+# Get path for FreeCAD macros
+p=App.ParamGet("User parameter:BaseApp/Preferences/Macro")
+macroPath = p.GetString("MacroPath")
+path = os.path.join(macroPath,'./Templater/template_generator.yaml')
+
+class YamlTemplates(object):
+    def __init__(self,path):
+        self.path = path
+        self.etypes = set(['textdocument','sheet','dynamicData','assembly4','folder'])
+
+    def load(self):
+        # Load templates from yaml
+        loader = Loader
+        try:
+            templates = yaml.load(open(self.path,'r',encoding='utf-8'),loader)
+        except:
+            print('template_generator.yaml could not found or invalid')
+            return
+        # Check types of elements in templates
+        for t in templates['templates']:
+            for e in t['elements']:
+                if not e['type'] in self.etypes:
+                    raise Exception('type not valid for element in yaml')
+        return templates['templates']
+    
+    def templates_list(self):
+        templates = self.load()
+        list_templates = [i['name'] for i in templates]
+        return list_templates
+    
+    def max_tree_level(self):
+        templates = self.load()
+        max_level = 0
+        for t in templates:
+            for e in t['elements']:
+                if e['treelevel'] > max_level: max_level = e['treelevel']
+        return max_level
+    
+    def write(self,templates):
+        with open(self.path,'w',encoding='utf-8') as f:
+            document = yaml.dump(templates,f)
+
+class Editor(QDialog,ui_editor.Ui_Dialog):
+    window_closed = QtCore.Signal()
+    def __init__(self,parent=None,template=None):
+        super(Editor,self).__init__(parent)
+        self.setupUi(self)
+        # Hacemos la ventana modal
+        self.setModal(True)
+        self.etypes = ['textdocument','sheet','dynamicData','assembly4','folder']
+        oyaml = YamlTemplates(path)
+        self.oyaml = oyaml
+        self.template = template
+        self.newyaml = {'templates':[]}
+        self.telements = None
+        if template != '':
+            self.template_load()
+        else:
+            self.treeWidget.clear()
+            item0 = QTreeWidgetItem(self.treeWidget)
+            item0.setText(0,'New template')
+            item0.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEditable|
+            Qt.ItemIsDragEnabled|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled)
+        self.pushButton_add.clicked.connect(self.add_row)
+        self.pushButton_del.clicked.connect(self.del_row)
+        self.pushButton_cancel.clicked.connect(self.close)
+        self.pushButton_save.clicked.connect(self.save)
+        self.treeWidget.itemChanged.connect(self.adjust_rows)
+    
+    def close(self):
+        self.hide()
+
+    def template_load(self):
+        self.templates = self.oyaml.load()
+        for t in self.templates:
+            if t['name'] == self.template:
+                break
+        if self.template == '': return
+        self.treeWidget.clear()
+        item0 = QTreeWidgetItem(self.treeWidget)
+        item0.setText(0, self.template)
+        maxtreelevel = self.oyaml.max_tree_level()
+        lastperlevel = [0]*(maxtreelevel+1)
+        lastperlevel[0] = self.treeWidget.topLevelItem(0)
+        for e in t['elements']:
+            combo = QComboBox(self.treeWidget)
+            combo.addItems(self.etypes)
+            combo.setCurrentText(e['type'])
+            combo.adjustSize()
+            combo.currentIndexChanged.connect(self.check_combo)
+            # Each element pends from last element of his level-1
+            item = QTreeWidgetItem(lastperlevel[e['treelevel']-1])
+            item.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEditable|
+            Qt.ItemIsDragEnabled|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled)
+            lastperlevel[e['treelevel']] = item
+            item.setText(0,e['name'])
+            self.treeWidget.setItemWidget(item, 1, combo)
+        self.treeWidget.expandAll()
+        # self.treeWidget.expandItem(self.treeWidget.topLevelItem(0))
+        self.treeWidget.resizeColumnToContents(0)
+        self.treeWidget.resizeColumnToContents(1)
+    
+    def add_row(self):
+        currentitem = self.treeWidget.currentItem()
+        try:
+            currenttype = self.treeWidget.itemWidget(currentitem,1).currentText()
+        except:
+            currenttype = ''
+        if currenttype == 'folder' or currenttype == '':
+            combo = QComboBox(self.treeWidget)
+            combo.addItems(self.etypes)
+            combo.setCurrentText(self.etypes[-1])
+            combo.adjustSize()
+            combo.currentIndexChanged.connect(self.check_combo)
+            n_Item=QTreeWidgetItem(self.treeWidget.currentItem())
+            n_Item.setText(0,'NAME')
+            n_Item.setExpanded(True)
+            n_Item.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEditable|
+            Qt.ItemIsDragEnabled|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled)
+            self.treeWidget.resizeColumnToContents(0)
+            self.treeWidget.setItemWidget(n_Item, 1, combo)
+            self.treeWidget.expandAll()
+        else:
+            QMessageBox.warning(self, "Error",
+            "Los elementos que no sean carpetas no pueden contener subelementos")
+    
+    def del_row(self):
+        root = self.treeWidget.invisibleRootItem()
+        for item in self.treeWidget.selectedItems():
+            if item.text(0)!='Application':
+                (item.parent() or root).removeChild(item)
+
+    def adjust_rows(self):
+        self.treeWidget.resizeColumnToContents(0)
+        self.treeWidget.resizeColumnToContents(1)
+    
+    def check_combo(self):
+        current = self.treeWidget.currentItem()
+        try:
+            currenttype = self.treeWidget.itemWidget(current,1).currentText()
+        except:
+            currenttype = ''
+        if currenttype == '': return
+        if current.childCount() > 0 and currenttype != 'folder':
+            QMessageBox.warning(self, "Error", "Los elementos que no sean carpetas no pueden contener subelementos")
+            self.treeWidget.itemWidget(current,1).setCurrentText('folder')
+        return
+    
+    def recursive_child(self,item,level):
+        for i in range(item.childCount()):
+            self.telements.append(
+                {
+                    'type': self.treeWidget.itemWidget(item.child(i),1).currentText(),
+                    'treelevel': level,
+                    'name': item.child(i).text(0),
+                }
+            )
+            if item.child(i).childCount() > 0:
+                self.recursive_child(item.child(i),level+1)
+        return
+    
+    def save(self):
+        self.newyaml = {'templates':[]}
+        self.newyaml['templates'].append({'name':self.treeWidget.topLevelItem(0).text(0),
+        'elements':[]})
+        self.telements = self.newyaml['templates'][0]['elements']
+        self.recursive_child(self.treeWidget.topLevelItem(0),1)
+        self.templates = self.oyaml.load()
+        if self.templates != '':
+            self.newyaml['templates'].extend(self.templates)
+        self.oyaml.write(self.newyaml)
+        QMessageBox.information(self, "Listo","El nuevo template se ha guardado correctamente")
+        self.closeEvent(self)
+
+    def closeEvent(self, event):
+        self.window_closed.emit()
+        event.accept()
+
+class Templater(QDialog,ui_listview.Ui_Dialog):
+    def __init__(self,parent=None):
+        super(Templater,self).__init__(parent)
+        self.setupUi(self)
+        # Set window as modal
+        self.setModal(True)
+        self.model = QtGui.QStandardItemModel()
+        self.listView.setModel(self.model)
+        # Load templates from yaml
+        self.oyaml = YamlTemplates(path)
+        self.templates = self.oyaml.load()
+        self.selected = ''
+        self.row = 0
+        for i in self.templates:
+            item = QtGui.QStandardItem(i['name'])
+            self.model.appendRow(item)
+        self.pushButton_ok.clicked.connect(self.template_to_freecad)
+        self.pushButton_cancelar.clicked.connect(self.close)
+        self.pushButton_edit.clicked.connect(self.edit)
+        self.pushButton_create.clicked.connect(self.create)
+        self.pushButton_delete.clicked.connect(self.delete_template)
+        self.listView.clicked[QtCore.QModelIndex].connect(self.on_clicked)
+        QtCore.QMetaObject.connectSlotsByName(self)
+    
+    def edit(self):
+        self.mform = Editor(self,template=self.selected)
+        self.mform.window_closed.connect(self.update_list)
+        self.mform.show()
+    
+    def update_list(self):
+        self.templates = self.oyaml.load()
+        self.model.removeRows(0, self.model.rowCount())
+        self.selected = ''
+        for i in self.templates:
+            item = QtGui.QStandardItem(i['name'])
+            self.model.appendRow(item)
+
+    def create(self):
+        self.mform = Editor(self,template='')
+        self.mform.window_closed.connect(self.update_list)
+        self.mform.show()
+
+    def on_clicked(self, index):
+        self.selected = index.data()
+        self.row = index.row()
+
+    def close(self):
+        self.hide()
+    
+    def delete_template(self):
+        self.templates = self.oyaml.load()
+        del self.templates[self.row]
+        self.newyaml = {'templates':self.templates}
+        self.oyaml.write(self.newyaml)
+        self.update_list()
+
+    def template_to_freecad(self):
+        ctr = 0
+        assemblies = 0
+        dds = 0
+        ordobjects = OrderedDict()
+        if self.selected != '':
+            maxtreelevel = self.oyaml.max_tree_level()
+            lastperlevel = [0]*(maxtreelevel+1)
+            lastperlevel[0] = self.selected
+            for t in self.templates:
+                if self.selected == t['name']:
+                    break
+            for e in t['elements']:
+                name = e['name']
+                if e['type'] == 'textdocument':
+                    App.ActiveDocument.addObject("App::TextDocument",f"TextDocument{ctr:03d}").Label = name
+                    ordobjects[f"TextDocument{ctr:03d}"] = e['treelevel']
+                if e['type'] == 'sheet':
+                    App.activeDocument().addObject('Spreadsheet::Sheet',f"Sheet{ctr:03d}").Label = name
+                    ordobjects[f"Sheet{ctr:03d}"] = e['treelevel']
+                if e['type'] == 'dynamicData':
+                    Gui.runCommand('DynamicDataCreateObject',0)
+                    if dds == 0:
+                        App.activeDocument().getObject('dd').Label = name
+                        ordobjects['dd'] = e['treelevel']
+                    else:
+                        App.activeDocument().getObject(f'dd{dds:03d}').Label = name
+                        ordobjects[f"dd{dds:03d}"] = e['treelevel']
+                    dds+=1
+                if e['type'] == 'assembly4':
+                    if assemblies == 0:
+                        Gui.activateWorkbench('Assembly4Workbench')
+                        Gui.runCommand('Asm4_makeAssembly',0)
+                        ordobjects['Parts'] = e['treelevel']
+                        ordobjects['Assembly'] = e['treelevel']
+                        assemblies+=1
+                if e['type'] == 'folder':
+                    App.activeDocument().addObject('App::DocumentObjectGroup',f'Group{ctr:03d}')
+                    App.activeDocument().getObject(f"Group{ctr:03d}").Label = name
+                    ordobjects[f'Group{ctr:03d}'] = e['treelevel']
+                ctr+=1
+            print(ordobjects)
+            for k,v in ordobjects.items():
+                print(k)
+                if v > 1:
+                    parent = lastperlevel[v-1]
+                    App.activeDocument().getObject(k).adjustRelativeLinks(App.activeDocument().getObject(parent))
+                    App.activeDocument().getObject(parent).addObject(App.activeDocument().getObject(k))
+                lastperlevel[v] = k
+            self.hide()
+
+if __name__ == '__main__': 
+    mform=Templater()
+    mform.show()
+    mform.exec_()
+
+
