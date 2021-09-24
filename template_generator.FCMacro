@@ -5,8 +5,8 @@ __Comment__ = '''
 Create FreeCAD template into opened file from yaml configuration using graphical user interface.
 This tool was created from original ideas of Juan Carlos and Juan Manuel Martín from Telegram group 'FreeCAD en Español'.
 '''
-__Author__ = "Daniel Pose"
-__Version__ = '0.3.1'
+__Author__ = "Daniel Pose. iinjdpa at gmail"
+__Version__ = '0.3.2'
 __Date__ = '2021-09-19'
 __License__ = 'MIT'
 __Web__ = ""
@@ -18,6 +18,13 @@ __Requires__ = 'Freecad >= 0.19'
 __Communication__ = ''
 __Files__ = 'template_generator.yaml, ui_editor.py, ui_listview.py, __init__.py'
 
+# import ptvsd
+# print("Waiting for debugger attach")
+# # 5678 is the default attach port in the VS Code debug configurations
+# ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
+# #ptvsd.wait_for_attach()
+# ptvsd.break_into_debugger()
+
 import FreeCAD as App
 import FreeCADGui as Gui
 import PySide
@@ -26,7 +33,7 @@ from Templater import ui_editor
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
 from PySide.QtGui import QLineEdit, QRadioButton, QDialog, QApplication, QStyleFactory, QTreeWidgetItem
-from PySide.QtGui import QComboBox, QMessageBox
+from PySide.QtGui import QComboBox, QMessageBox, QFileDialog
 import DynamicDataCmd
 import yaml
 from yaml import Loader
@@ -39,10 +46,19 @@ p=App.ParamGet("User parameter:BaseApp/Preferences/Macro")
 macroPath = p.GetString("MacroPath")
 path = os.path.join(macroPath,'./Templater/template_generator.yaml')
 
+objetTypes = [
+    'textdocument',
+    'sheet',
+    'dynamicData',
+    'assembly4',
+    'techDrawTemplate',
+    'folder'
+]
+
 class YamlTemplates(object):
     def __init__(self,path):
         self.path = path
-        self.etypes = set(['textdocument','sheet','dynamicData','assembly4','folder'])
+        self.etypes = set(objetTypes)
 
     def load(self):
         # Load templates from yaml
@@ -50,7 +66,7 @@ class YamlTemplates(object):
         try:
             templates = yaml.load(open(self.path,'r',encoding='utf-8'),loader)
         except:
-            print('template_generator.yaml could not found or invalid')
+            QMessageBox.critical(self, "Error","emplate_generator.yaml could not found or invalid")
             return
         # Check types of elements in templates
         for t in templates['templates']:
@@ -83,12 +99,13 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
         self.setupUi(self)
         # Hacemos la ventana modal
         self.setModal(True)
-        self.etypes = ['textdocument','sheet','dynamicData','assembly4','folder']
+        self.etypes = objetTypes
         oyaml = YamlTemplates(path)
         self.oyaml = oyaml
         self.template = template
         self.newyaml = {'templates':[]}
         self.telements = None
+        self.filename = ''
         if template != '':
             self.template_load()
         else:
@@ -101,10 +118,16 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
         self.pushButton_del.clicked.connect(self.del_row)
         self.pushButton_cancel.clicked.connect(self.close)
         self.pushButton_save.clicked.connect(self.save)
+        self.pushButton_file.clicked.connect(self.load_file)
         self.treeWidget.itemChanged.connect(self.adjust_rows)
     
     def close(self):
         self.hide()
+    
+    def load_file(self):
+        self.filename = QFileDialog.getOpenFileName(self, 'Open FreeCAD file', '.',
+        'FreeCAD(*.FCStd)')
+        self.lineEdit.setText(self.filename[0])
 
     def template_load(self):
         self.templates = self.oyaml.load()
@@ -137,6 +160,7 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
         # self.treeWidget.expandItem(self.treeWidget.topLevelItem(0))
         self.treeWidget.resizeColumnToContents(0)
         self.treeWidget.resizeColumnToContents(1)
+        self.lineEdit.setText(t['file'])
     
     def add_row(self):
         currentitem = self.treeWidget.currentItem()
@@ -200,7 +224,7 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
     def save(self):
         self.newyaml = {'templates':[]}
         self.newyaml['templates'].append({'name':self.treeWidget.topLevelItem(0).text(0),
-        'elements':[]})
+        'elements':[],'file':self.lineEdit.text()})
         self.telements = self.newyaml['templates'][0]['elements']
         self.recursive_child(self.treeWidget.topLevelItem(0),1)
         self.templates = self.oyaml.load()
@@ -272,10 +296,13 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
         self.update_list()
 
     def template_to_freecad(self):
+        App.newDocument('Unnamed')
         ctr = 0
         assemblies = 0
         dds = 0
+        techdraws = 0
         ordobjects = OrderedDict()
+        ndoc_dds = []
         if self.selected != '':
             maxtreelevel = self.oyaml.max_tree_level()
             lastperlevel = [0]*(maxtreelevel+1)
@@ -292,13 +319,31 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                     App.activeDocument().addObject('Spreadsheet::Sheet',f"Sheet{ctr:03d}").Label = name
                     ordobjects[f"Sheet{ctr:03d}"] = e['treelevel']
                 if e['type'] == 'dynamicData':
-                    Gui.runCommand('DynamicDataCreateObject',0)
                     if dds == 0:
-                        App.activeDocument().getObject('dd').Label = name
-                        ordobjects['dd'] = e['treelevel']
+                        cdoc_name = App.ActiveDocument.Name
+                        # Open FreeCAD file used as dynamicData source
+                        ndoc = App.openDocument(t['file'])
+                        ndoc_name = App.ActiveDocument.Name
+                        objs = App.ActiveDocument.Objects
+                        App.setActiveDocument(cdoc_name)
+                        for obj in objs:
+                            if not 'FeaturePython' in str(obj.TypeId):
+                                # Object is not a dd
+                                continue
+                            if obj.Label == name:
+                                cp_obj = App.ActiveDocument.copyObject(obj)
+                                ordobjects[obj.Name] = e['treelevel']
                     else:
-                        App.activeDocument().getObject(f'dd{dds:03d}').Label = name
-                        ordobjects[f"dd{dds:03d}"] = e['treelevel']
+                        # App.setActiveDocument(ndoc_name)
+                        # objs = App.ActiveDocument.Objects
+                        # App.setActiveDocument(cdoc_name)
+                        for obj in objs:
+                            if not 'FeaturePython' in str(obj.TypeId):
+                                # Object is not a dd
+                                continue
+                            if obj.Label == name:
+                                cp_obj = App.ActiveDocument.copyObject(obj)
+                                ordobjects[obj.Name] = e['treelevel']
                     dds+=1
                 if e['type'] == 'assembly4':
                     if assemblies == 0:
@@ -311,10 +356,18 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                     App.activeDocument().addObject('App::DocumentObjectGroup',f'Group{ctr:03d}')
                     App.activeDocument().getObject(f"Group{ctr:03d}").Label = name
                     ordobjects[f'Group{ctr:03d}'] = e['treelevel']
+                if e['type'] == 'techDrawTemplate':
+                    if techdraws == 0:
+                        page = App.ActiveDocument.addObject('TechDraw::DrawPage','Page')
+                        template = App.ActiveDocument.addObject('TechDraw::DrawSVGTemplate','Template')
+                        tpath = os.path.join(App.getResourceDir(),'Mod/TechDraw/Templates/A4_LandscapeTD.svg')
+                        template.Template = tpath
+                        page.Template = App.ActiveDocument.Template
+                        ordobjects[f'Page'] = e['treelevel']
+                        techdraws+=1
                 ctr+=1
-            print(ordobjects)
+            App.closeDocument(ndoc_name)
             for k,v in ordobjects.items():
-                print(k)
                 if v > 1:
                     parent = lastperlevel[v-1]
                     App.activeDocument().getObject(k).adjustRelativeLinks(App.activeDocument().getObject(parent))
