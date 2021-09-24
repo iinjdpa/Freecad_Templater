@@ -1,9 +1,12 @@
 # coding: utf-8
 
 __Name__ = 'Template generator'
-__Comment__ = 'Create FreeCAD template into opened file from yaml configuration'
+__Comment__ = '''
+Create FreeCAD template into opened file from yaml configuration using graphical user interface.
+This tool was created from original ideas of Juan Carlos and Juan Manuel Martín from Telegram group 'FreeCAD en Español'.
+'''
 __Author__ = "Daniel Pose"
-__Version__ = '0.3'
+__Version__ = '0.3.1'
 __Date__ = '2021-09-19'
 __License__ = 'MIT'
 __Web__ = ""
@@ -13,7 +16,7 @@ __Help__ = ''
 __Status__ = 'stable'
 __Requires__ = 'Freecad >= 0.19'
 __Communication__ = ''
-__Files__ = 'template_generator.yaml'
+__Files__ = 'template_generator.yaml, ui_editor.py, ui_listview.py, __init__.py'
 
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -112,6 +115,8 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
         self.treeWidget.clear()
         item0 = QTreeWidgetItem(self.treeWidget)
         item0.setText(0, self.template)
+        item0.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEditable|
+            Qt.ItemIsDragEnabled|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled)
         maxtreelevel = self.oyaml.max_tree_level()
         lastperlevel = [0]*(maxtreelevel+1)
         lastperlevel[0] = self.treeWidget.topLevelItem(0)
@@ -155,7 +160,7 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
             self.treeWidget.expandAll()
         else:
             QMessageBox.warning(self, "Error",
-            "Los elementos que no sean carpetas no pueden contener subelementos")
+            "Items other than folders cannot contain sub items")
     
     def del_row(self):
         root = self.treeWidget.invisibleRootItem()
@@ -175,7 +180,7 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
             currenttype = ''
         if currenttype == '': return
         if current.childCount() > 0 and currenttype != 'folder':
-            QMessageBox.warning(self, "Error", "Los elementos que no sean carpetas no pueden contener subelementos")
+            QMessageBox.warning(self, "Error", "Items other than folders cannot contain sub items")
             self.treeWidget.itemWidget(current,1).setCurrentText('folder')
         return
     
@@ -200,9 +205,10 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
         self.recursive_child(self.treeWidget.topLevelItem(0),1)
         self.templates = self.oyaml.load()
         if self.templates != '':
-            self.newyaml['templates'].extend(self.templates)
+            tname = self.treeWidget.topLevelItem(0).text(0)
+            self.newyaml['templates'].extend([t for t in self.templates if t['name']!=tname])
         self.oyaml.write(self.newyaml)
-        QMessageBox.information(self, "Listo","El nuevo template se ha guardado correctamente")
+        QMessageBox.information(self, "Ready","The new template has been successfully saved")
         self.closeEvent(self)
 
     def closeEvent(self, event):
