@@ -17,20 +17,13 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(327, 376)
+        Dialog.resize(509, 453)
         self.gridLayout = QGridLayout(Dialog)
         self.gridLayout.setObjectName(u"gridLayout")
         self.treeWidget = QTreeWidget(Dialog)
         self.treeWidget.setObjectName(u"treeWidget")
 
         self.gridLayout.addWidget(self.treeWidget, 0, 0, 1, 1)
-
-        self.line = QFrame(Dialog)
-        self.line.setObjectName(u"line")
-        self.line.setFrameShape(QFrame.HLine)
-        self.line.setFrameShadow(QFrame.Sunken)
-
-        self.gridLayout.addWidget(self.line, 2, 0, 1, 1)
 
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
@@ -62,6 +55,46 @@ class Ui_Dialog(object):
 
         self.gridLayout.addLayout(self.horizontalLayout_2, 1, 0, 1, 1)
 
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.label = QLabel(Dialog)
+        self.label.setObjectName(u"label")
+        sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
+        self.label.setSizePolicy(sizePolicy)
+        self.label.setMinimumSize(QSize(90, 25))
+        self.label.setMaximumSize(QSize(90, 25))
+
+        self.horizontalLayout_4.addWidget(self.label)
+
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.lineEdit = QLineEdit(Dialog)
+        self.lineEdit.setObjectName(u"lineEdit")
+        self.lineEdit.setMinimumSize(QSize(0, 25))
+        self.lineEdit.setMaximumSize(QSize(16777215, 25))
+
+        self.horizontalLayout_3.addWidget(self.lineEdit)
+
+        self.pushButton_file = QPushButton(Dialog)
+        self.pushButton_file.setObjectName(u"pushButton_file")
+        self.pushButton_file.setMinimumSize(QSize(25, 25))
+        self.pushButton_file.setMaximumSize(QSize(25, 25))
+
+        self.horizontalLayout_3.addWidget(self.pushButton_file)
+
+
+        self.horizontalLayout_4.addLayout(self.horizontalLayout_3)
+
+
+        self.gridLayout.addLayout(self.horizontalLayout_4, 2, 0, 1, 1)
+
+        self.line = QFrame(Dialog)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.HLine)
+        self.line.setFrameShadow(QFrame.Sunken)
+
+        self.gridLayout.addWidget(self.line, 3, 0, 1, 1)
+
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -79,7 +112,7 @@ class Ui_Dialog(object):
         self.horizontalLayout.addWidget(self.pushButton_cancel)
 
 
-        self.gridLayout.addLayout(self.horizontalLayout, 3, 0, 1, 1)
+        self.gridLayout.addLayout(self.horizontalLayout, 4, 0, 1, 1)
 
 
         self.retranslateUi(Dialog)
@@ -94,6 +127,8 @@ class Ui_Dialog(object):
         ___qtreewidgetitem.setText(0, QCoreApplication.translate("Dialog", u"Element", None));
         self.pushButton_add.setText(QCoreApplication.translate("Dialog", u"Add element", None))
         self.pushButton_del.setText(QCoreApplication.translate("Dialog", u"Delete element", None))
+        self.label.setText(QCoreApplication.translate("Dialog", u"Template file", None))
+        self.pushButton_file.setText(QCoreApplication.translate("Dialog", u"...", None))
         self.pushButton_save.setText(QCoreApplication.translate("Dialog", u"Save", None))
         self.pushButton_cancel.setText(QCoreApplication.translate("Dialog", u"Cancel", None))
     # retranslateUi
