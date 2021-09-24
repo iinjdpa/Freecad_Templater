@@ -3,95 +3,56 @@ templates:
   - name: "DESCRIPCI\xD3N"
     treelevel: 1
     type: textdocument
-  - name: "F\xD3RMULAS"
-    treelevel: 1
-    type: sheet
   - name: VARIABLES
     treelevel: 1
     type: folder
-  - name: VAR1
+  - name: SHEET
+    treelevel: 2
+    type: sheet
+  - name: tornillos
     treelevel: 2
     type: dynamicData
-  - name: VAR2
+  - name: tolerancias
     treelevel: 2
     type: dynamicData
+  - name: DATOS
+    treelevel: 1
+    type: folder
+  - name: imagenes
+    treelevel: 2
+    type: folder
+  - name: importados
+    treelevel: 2
+    type: folder
+  - name: FORMAS
+    treelevel: 1
+    type: folder
+  - name: sketches
+    treelevel: 2
+    type: folder
+  - name: operaciones
+    treelevel: 2
+    type: folder
+  - name: RESULTADOS
+    treelevel: 1
+    type: folder
+  - name: mallas
+    treelevel: 2
+    type: folder
+  - name: solidos
+    treelevel: 2
+    type: folder
   - name: ENSAMBLE
     treelevel: 1
     type: folder
-  - name: ASS4
+  - name: ensamble
     treelevel: 2
     type: assembly4
-  - name: FORMAS
+  - name: PLANO
     treelevel: 1
     type: folder
-  - name: aristas
+  - name: plano
     treelevel: 2
-    type: folder
-  - name: finales
-    treelevel: 2
-    type: folder
-  name: MI_PLANTILLA
-- elements:
-  - name: "DESCRIPCI\xD3N"
-    treelevel: 1
-    type: textdocument
-  - name: DIMENSIONES
-    treelevel: 1
-    type: sheet
-  - name: VARIABLES
-    treelevel: 1
-    type: dynamicData
-  - name: "SIMULACI\xD3N"
-    treelevel: 1
-    type: assembly4
-  - name: FORMAS
-    treelevel: 1
-    type: folder
-  - name: sketches
-    treelevel: 2
-    type: folder
-  - name: aristas
-    treelevel: 2
-    type: folder
-  - name: superficies
-    treelevel: 2
-    type: folder
-  - name: referencias
-    treelevel: 2
-    type: folder
-  - name: operaciones
-    treelevel: 2
-    type: folder
-  name: Plantilla principal
-- elements:
-  - name: "DESCRIPCI\xD3N"
-    treelevel: 1
-    type: textdocument
-  - name: DIMENSIONES
-    treelevel: 1
-    type: sheet
-  - name: VARIABLES
-    treelevel: 1
-    type: dynamicData
-  - name: "SIMULACI\xD3N"
-    treelevel: 1
-    type: assembly4
-  - name: CARPETAS
-    treelevel: 1
-    type: folder
-  - name: sketches
-    treelevel: 2
-    type: folder
-  - name: aristas
-    treelevel: 2
-    type: folder
-  - name: superficies
-    treelevel: 2
-    type: folder
-  - name: referencias
-    treelevel: 2
-    type: folder
-  - name: operaciones
-    treelevel: 2
-    type: folder
-  name: Plantilla secundaria
+    type: techDrawTemplate
+  file: C:/Users/jdpose/AppData/Roaming/FreeCAD/Macro/Templater/Templates.FCStd
+  name: Plantilla
