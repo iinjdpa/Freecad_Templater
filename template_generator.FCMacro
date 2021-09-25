@@ -338,9 +338,11 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                                     ordobjects[obj.Name] = e['treelevel']
                                     exist_in_file = True
                             if not exist_in_file:
+                                Gui.runCommand('DynamicDataCreateObject',0)
                                 App.activeDocument().getObject('dd').Label = name
                                 ordobjects['dd'] = e['treelevel']
                         else:
+                            Gui.runCommand('DynamicDataCreateObject',0)
                             App.activeDocument().getObject('dd').Label = name
                             ordobjects['dd'] = e['treelevel']
                     else:
@@ -354,9 +356,11 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                                     ordobjects[obj.Name] = e['treelevel']
                                     exist_in_file = True
                             if not exist_in_file:
+                                Gui.runCommand('DynamicDataCreateObject',0)
                                 App.activeDocument().getObject(f'dd{dds:03d}').Label = name
                                 ordobjects[f"dd{dds:03d}"] = e['treelevel']
                         else:
+                            Gui.runCommand('DynamicDataCreateObject',0)
                             App.activeDocument().getObject(f'dd{dds:03d}').Label = name
                             ordobjects[f"dd{dds:03d}"] = e['treelevel']
                     dds+=1
@@ -381,7 +385,8 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                         ordobjects[f'Page'] = e['treelevel']
                         techdraws+=1
                 ctr+=1
-            App.closeDocument(ndoc_name)
+            if t['file'] != '' and dds > 0:
+                App.closeDocument(ndoc_name)
             for k,v in ordobjects.items():
                 if v > 1:
                     parent = lastperlevel[v-1]
