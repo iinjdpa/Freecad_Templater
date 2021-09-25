@@ -255,6 +255,11 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
         for i in self.templates:
             item = QtGui.QStandardItem(i['name'])
             self.model.appendRow(item)
+        # Select first item
+        if self.listView.model().rowCount() > 0:
+            self.listView.setCurrentIndex(self.listView.model().index(0,0))
+            self.selected = self.listView.model().index(0,0).data()
+            self.row = self.listView.model().index(0,0).row()
         self.pushButton_ok.clicked.connect(self.template_to_freecad)
         self.pushButton_cancelar.clicked.connect(self.close)
         self.pushButton_edit.clicked.connect(self.edit)
@@ -328,7 +333,6 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                             ndoc_name = App.ActiveDocument.Name
                             objs = App.ActiveDocument.Objects
                             App.setActiveDocument(cdoc_name)
-                            exi
                             for obj in objs:
                                 if not 'FeaturePython' in str(obj.TypeId):
                                     # Object is not a dd
