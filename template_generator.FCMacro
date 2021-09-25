@@ -6,7 +6,7 @@ Create FreeCAD template into opened file from yaml configuration using graphical
 This tool was created from original ideas of Juan Carlos and Juan Manuel Martín from Telegram group 'FreeCAD en Español'.
 '''
 __Author__ = "Daniel Pose. iinjdpa at gmail"
-__Version__ = '0.3.2'
+__Version__ = '0.3.3'
 __Date__ = '2021-09-19'
 __License__ = 'MIT'
 __Web__ = ""
@@ -319,31 +319,46 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                     App.activeDocument().addObject('Spreadsheet::Sheet',f"Sheet{ctr:03d}").Label = name
                     ordobjects[f"Sheet{ctr:03d}"] = e['treelevel']
                 if e['type'] == 'dynamicData':
+                    exist_in_file = False
                     if dds == 0:
                         cdoc_name = App.ActiveDocument.Name
                         # Open FreeCAD file used as dynamicData source
-                        ndoc = App.openDocument(t['file'])
-                        ndoc_name = App.ActiveDocument.Name
-                        objs = App.ActiveDocument.Objects
-                        App.setActiveDocument(cdoc_name)
-                        for obj in objs:
-                            if not 'FeaturePython' in str(obj.TypeId):
-                                # Object is not a dd
-                                continue
-                            if obj.Label == name:
-                                cp_obj = App.ActiveDocument.copyObject(obj)
-                                ordobjects[obj.Name] = e['treelevel']
+                        if t['file'] != '':
+                            ndoc = App.openDocument(t['file'])
+                            ndoc_name = App.ActiveDocument.Name
+                            objs = App.ActiveDocument.Objects
+                            App.setActiveDocument(cdoc_name)
+                            exi
+                            for obj in objs:
+                                if not 'FeaturePython' in str(obj.TypeId):
+                                    # Object is not a dd
+                                    continue
+                                if obj.Label == name:
+                                    cp_obj = App.ActiveDocument.copyObject(obj)
+                                    ordobjects[obj.Name] = e['treelevel']
+                                    exist_in_file = True
+                            if not exist_in_file:
+                                App.activeDocument().getObject('dd').Label = name
+                                ordobjects['dd'] = e['treelevel']
+                        else:
+                            App.activeDocument().getObject('dd').Label = name
+                            ordobjects['dd'] = e['treelevel']
                     else:
-                        # App.setActiveDocument(ndoc_name)
-                        # objs = App.ActiveDocument.Objects
-                        # App.setActiveDocument(cdoc_name)
-                        for obj in objs:
-                            if not 'FeaturePython' in str(obj.TypeId):
-                                # Object is not a dd
-                                continue
-                            if obj.Label == name:
-                                cp_obj = App.ActiveDocument.copyObject(obj)
-                                ordobjects[obj.Name] = e['treelevel']
+                        if t['file'] != '':
+                            for obj in objs:
+                                if not 'FeaturePython' in str(obj.TypeId):
+                                    # Object is not a dd
+                                    continue
+                                if obj.Label == name:
+                                    cp_obj = App.ActiveDocument.copyObject(obj)
+                                    ordobjects[obj.Name] = e['treelevel']
+                                    exist_in_file = True
+                            if not exist_in_file:
+                                App.activeDocument().getObject(f'dd{dds:03d}').Label = name
+                                ordobjects[f"dd{dds:03d}"] = e['treelevel']
+                        else:
+                            App.activeDocument().getObject(f'dd{dds:03d}').Label = name
+                            ordobjects[f"dd{dds:03d}"] = e['treelevel']
                     dds+=1
                 if e['type'] == 'assembly4':
                     if assemblies == 0:
