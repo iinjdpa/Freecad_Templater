@@ -371,7 +371,10 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                 if e['type'] == 'assembly4':
                     if assemblies == 0:
                         Gui.activateWorkbench('Assembly4Workbench')
-                        Gui.runCommand('Asm4_makeAssembly',0)
+                        try:
+                            Gui.runCommand('Asm4_makeAssembly',0)
+                        except:
+                            Gui.runCommand('Asm4_newModel',0)
                         ordobjects['Parts'] = e['treelevel']
                         ordobjects['Assembly'] = e['treelevel']
                         assemblies+=1
@@ -394,7 +397,7 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
             for k,v in ordobjects.items():
                 if v > 1:
                     parent = lastperlevel[v-1]
-                    App.activeDocument().getObject(k).adjustRelativeLinks(App.activeDocument().getObject(parent))
+                    #App.activeDocument().getObject(k).adjustRelativeLinks(App.activeDocument().getObject(parent))
                     App.activeDocument().getObject(parent).addObject(App.activeDocument().getObject(k))
                 lastperlevel[v] = k
             self.hide()
