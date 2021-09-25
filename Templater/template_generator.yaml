@@ -54,5 +54,5 @@ templates:
   - name: plano
     treelevel: 2
     type: techDrawTemplate
-  file: C:/Users/jdpose/AppData/Roaming/FreeCAD/Macro/Templater/Templates.FCStd
+  file: ''
   name: Plantilla
