@@ -3,6 +3,8 @@
 Create FreeCAD template into opened file from yaml configuration using graphical user interface.
 This tool was created from original ideas of Juan Carlos and Juan Manuel Martín from Telegram group 'FreeCAD en Español'.
 
+<img src="https://i.ibb.co/SB776q0/2021-10-04-22h35-02.png" alt="2021-10-04-22h35-02" border="0">
+
 ## Installation
 
 Copy Template folder and template_generator.FCMacro file into FreeCAD Macro path.
