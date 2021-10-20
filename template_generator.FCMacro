@@ -6,8 +6,8 @@ Create FreeCAD template into opened file from yaml configuration using graphical
 This tool was created from original ideas of Juan Carlos and Juan Manuel Martín from Telegram group 'FreeCAD en Español'.
 '''
 __Author__ = "Daniel Pose. iinjdpa at gmail"
-__Version__ = '0.3.3'
-__Date__ = '2021-09-19'
+__Version__ = '0.3.5'
+__Date__ = '2021-10-15'
 __License__ = 'MIT'
 __Web__ = ""
 __Wiki__ = ""
@@ -18,12 +18,6 @@ __Requires__ = 'Freecad >= 0.19'
 __Communication__ = ''
 __Files__ = 'template_generator.yaml, ui_editor.py, ui_listview.py, __init__.py'
 
-# import ptvsd
-# print("Waiting for debugger attach")
-# # 5678 is the default attach port in the VS Code debug configurations
-# ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
-# #ptvsd.wait_for_attach()
-# ptvsd.break_into_debugger()
 
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -52,6 +46,8 @@ objetTypes = [
     'dynamicData',
     'assembly4',
     'techDrawTemplate',
+    'body',
+    'part',
     'folder'
 ]
 
@@ -168,7 +164,7 @@ class Editor(QDialog,ui_editor.Ui_Dialog):
             currenttype = self.treeWidget.itemWidget(currentitem,1).currentText()
         except:
             currenttype = ''
-        if currenttype == 'folder' or currenttype == '':
+        if currenttype == 'folder' or currenttype == 'part' or currenttype == '':
             combo = QComboBox(self.treeWidget)
             combo.addItems(self.etypes)
             combo.setCurrentText(self.etypes[-1])
@@ -373,10 +369,11 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                         Gui.activateWorkbench('Assembly4Workbench')
                         try:
                             Gui.runCommand('Asm4_makeAssembly',0)
+                            ordobjects['Assembly'] = e['treelevel']
                         except:
                             Gui.runCommand('Asm4_newModel',0)
+                            ordobjects['Model'] = e['treelevel']
                         ordobjects['Parts'] = e['treelevel']
-                        ordobjects['Assembly'] = e['treelevel']
                         assemblies+=1
                 if e['type'] == 'folder':
                     App.activeDocument().addObject('App::DocumentObjectGroup',f'Group{ctr:03d}')
@@ -391,6 +388,22 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                         page.Template = App.ActiveDocument.Template
                         ordobjects[f'Page'] = e['treelevel']
                         techdraws+=1
+                if e['type'] == 'part':
+                    App.activeDocument().Tip = App.activeDocument().addObject('App::Part',f'Part{ctr:03d}')
+                    App.activeDocument().getObject(f'Part{ctr:03d}').Label = name
+                    Gui.activateView('Gui::View3DInventor', True)
+                    Gui.activeView().setActiveObject('part', App.activeDocument().getObject(f'Part{ctr:03d}'))
+                    App.ActiveDocument.recompute()
+                    ordobjects[f'Part{ctr:03d}'] = e['treelevel']
+                if e['type'] == 'body':
+                    App.activeDocument().addObject('PartDesign::Body',f'Body{ctr:03d}')
+                    App.activeDocument().getObject(f'Body{ctr:03d}').Label = name
+                    Gui.activateView('Gui::View3DInventor', True)
+                    Gui.activeView().setActiveObject('pdbody', App.activeDocument().getObject(f'Body{ctr:03d}'))
+                    Gui.Selection.clearSelection()
+                    Gui.Selection.addSelection(App.activeDocument().getObject(f'Body{ctr:03d}'))
+                    App.ActiveDocument.recompute()
+                    ordobjects[f'Body{ctr:03d}'] = e['treelevel']
                 ctr+=1
             if t['file'] != '' and dds > 0:
                 App.closeDocument(ndoc_name)
@@ -398,7 +411,8 @@ class Templater(QDialog,ui_listview.Ui_Dialog):
                 if v > 1:
                     parent = lastperlevel[v-1]
                     #App.activeDocument().getObject(k).adjustRelativeLinks(App.activeDocument().getObject(parent))
-                    App.activeDocument().getObject(parent).addObject(App.activeDocument().getObject(k))
+                    if App.activeDocument().getObject(k):
+                        App.activeDocument().getObject(parent).addObject(App.activeDocument().getObject(k))
                 lastperlevel[v] = k
             self.hide()
 
@@ -406,5 +420,3 @@ if __name__ == '__main__':
     mform=Templater()
     mform.show()
     mform.exec_()
-
-
