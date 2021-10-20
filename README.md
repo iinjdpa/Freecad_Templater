@@ -12,6 +12,8 @@ This tool was created from original ideas of Juan Carlos and Juan Manuel Martín
 Copy Template folder and template_generator.FCMacro file into FreeCAD Macro path.
 
 ## Changelog
+### 0.3.5 (2021-10-20)
+- Added Part and Body
 ### 0.3.3 (2021-09-25)
 - First template selected by default
 - Minor bugs corrected
