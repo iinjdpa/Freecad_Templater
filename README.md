@@ -5,7 +5,7 @@ This tool was created from original ideas of Juan Carlos and Juan Manuel Martín
 
 <img src="https://i.ibb.co/SB776q0/2021-10-04-22h35-02.png" alt="2021-10-04-22h35-02" border="0">
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/2JZJYEfYs64&t/0.jpg)](https://www.youtube.com/watch?v=2JZJYEfYs64&t)
+[![YOUTUBE VIDEO](https://img.youtube.com/vi/2JZJYEfYs64&t=13s/0.jpg)](https://www.youtube.com/watch?v=2JZJYEfYs64&t=13s)
 
 ## Installation
 
